@@ -193,48 +193,48 @@ PayAmount<-function(pay.checker,coins){
                            two.exclamation.m=15)
   }
   if(coins==2){
-    pay.active<-data.frame(two.s7=1,
-                           two.7=2,
-                           three.s7=3,
-                           three.4=4,
-                           three.5=5,
-                           three.6=6,
-                           three.7=20,
-                           three.pound=7,
-                           three.at=12,
-                           three.exclamation=15,
-                           one.symbol.m=2,
-                           one.7.m=4,
-                           two.s7.m=6,
-                           two.4.m=8,
-                           two.5.m=10,
-                           two.6.m=12,
-                           two.7.m=40,
-                           two.pound.m=14,
-                           two.at.m=24,
-                           two.exclamation.m=30)
+    pay.active<-data.frame(two.s7=2,
+                           two.7=4,
+                           three.s7=6,
+                           three.4=8,
+                           three.5=510,
+                           three.6=12,
+                           three.7=40,
+                           three.pound=14,
+                           three.at=24,
+                           three.exclamation=30,
+                           one.symbol.m=4,
+                           one.7.m=8,
+                           two.s7.m=12,
+                           two.4.m=16,
+                           two.5.m=20,
+                           two.6.m=24,
+                           two.7.m=80,
+                           two.pound.m=28,
+                           two.at.m=48,
+                           two.exclamation.m=60)
   }
   if(coins==3){
-    pay.active<-data.frame(two.s7=1,
-                           two.7=2,
-                           three.s7=3,
-                           three.4=4,
-                           three.5=5,
-                           three.6=6,
-                           three.7=20,
-                           three.pound=7,
-                           three.at=12,
-                           three.exclamation=15,
-                           one.symbol.m=4,
-                           one.7.m=6,
-                           two.s7.m=9,
-                           two.4.m=12,
-                           two.5.m=15,
-                           two.6.m=18,
-                           two.7.m=60,
-                           two.pound.m=21,
-                           two.at.m=36,
-                           two.exclamation.m=45)
+    pay.active<-data.frame(two.s7=3,
+                           two.7=6,
+                           three.s7=9,
+                           three.4=12,
+                           three.5=15,
+                           three.6=18,
+                           three.7=60,
+                           three.pound=21,
+                           three.at=36,
+                           three.exclamation=45,
+                           one.symbol.m=9,
+                           one.7.m=18,
+                           two.s7.m=27,
+                           two.4.m=36,
+                           two.5.m=45,
+                           two.6.m=54,
+                           two.7.m=180,
+                           two.pound.m=63,
+                           two.at.m=108,
+                           two.exclamation.m=135)
   }
   
   if(pay.checker$s7.check != 2){
@@ -300,44 +300,44 @@ PayAmount<-function(pay.checker,coins){
   return(pay.active)
 }
 
-CoinPay<-function(slot.matrix,coin){
+CoinPay<-function(slot.matrix,coin,lines){
   payout<-rep(0,3)
-  if(coin==1){
+  if(lines==1){
     pay.checker_1<-PayOutCalc(slot.matrix[2,])
-    payout[2]<-max(PayAmount(pay.checker_1,1))
+    payout[2]<-max(PayAmount(pay.checker_1,coin))
     return(payout)
   }
-  if(coin==2){
+  if(lines==2){
     pay.checker_1<-PayOutCalc(slot.matrix[2,])
-    payout[2]<-max(PayAmount(pay.checker_1,2))
+    payout[2]<-max(PayAmount(pay.checker_1,coin))
     
     pay.checker_2<-PayOutCalc(slot.matrix[1,])
-    payout[1]<-max(PayAmount(pay.checker_2,2))
+    payout[1]<-max(PayAmount(pay.checker_2,coin))
     return(payout)
   }
-  if(coin==3){
+  if(lines==3){
     pay.checker_1<-PayOutCalc(slot.matrix[2,])
-    payout[2]<-max(PayAmount(pay.checker_1,3))
+    payout[2]<-max(PayAmount(pay.checker_1,coin))
     
     pay.checker_2<-PayOutCalc(slot.matrix[1,])
-    payout[1]<-max(PayAmount(pay.checker_2,3))
+    payout[1]<-max(PayAmount(pay.checker_2,coin))
     
     pay.checker_3<-PayOutCalc(slot.matrix[3,])
-    payout[3]<-max(PayAmount(pay.checker_3,3))
+    payout[3]<-max(PayAmount(pay.checker_3,coin))
     return(payout)
   }
 }
 
-SlotMatrixDisplay<-function(slot.matrix,coins,pay){
+SlotMatrixDisplay<-function(slot.matrix,coins,pay,lines){
   line.active<-matrix(FALSE,nrow=3,ncol=1)
-  if(coins==1){
+  if(lines==1){
     line.active[2,1]<-TRUE
   }
-  if(coins==2){
+  if(lines==2){
     line.active[1,1]<-TRUE
     line.active[2,1]<-TRUE
   }
-  if(coins==3){
+  if(lines==3){
     line.active[1,1]<-TRUE
     line.active[2,1]<-TRUE
     line.active[3,1]<-TRUE
@@ -357,12 +357,11 @@ SlotMatrixDisplay<-function(slot.matrix,coins,pay){
 #outputs the users choice
 PromptFunc<-function(){
   writeLines(#displaying prompt
-    "Option 1: Output your credit balance
+    "Option 1: Spin slot machine
 Option 2: Deposit more Credits
-Option 3: Spin slot machine 
-Option 4: Cash out
-Option 5: Output Coins per spin amount
-Option 6: Change Coins per spin")
+Option 3: Change Coins per line
+Option 4: Change amount of lines
+Option 5: Cash out")
   
   option<-as.integer(readline(prompt = "Enter option number: "))#asking 
   #user for input
@@ -376,49 +375,52 @@ Option 6: Change Coins per spin")
 #which represents how many credits the user has. The third variable is 
 #window.matrix whose rows represent the idexes corresponding to which section
 #of that reel is being displayed
-PromptOption<-function(option, output, slot.list){
-  if(option==1){#if your option is to Output your credit balance
-    cat("Your current credit balance is: ", output[[2]])
-    cat("\n")
-    return(output)
-  }else if(option==2){#if your option is to deposit more credits
+PromptOption<-function(option, output, slot.list,simulation=FALSE,iteration=0){
+  if(option==2){#if your option is to deposit more credits
     deposit<-as.integer(#asking user for how many credits they want to deposit
       readline(prompt="Enter the amount(integers) of credits to deposit: "))
     output[[2]]<-output[[2]]+deposit
-    cat("Your current credit balance is: ", output[[2]])
-    cat("\n")
     return(output)
-  }else if(option==3){#if your option is to spin the slot
-    if(output[[2]]>=1){#this if statement is for if you have atleast 1 credit
-      output[[3]]<-Slot.Spin(output[[3]])#Slot.Spin randomly spins the reels
-      slot.matrix<-SlotDisplay(output[[3]])#a matrix of the window display of the slot machine
-      pay<-CoinPay(slot.matrix,output[[4]])#calculating how much you won
-      SlotMatrixDisplay(slot.matrix,output[[4]],pay)
-      output[[2]]<-output[[2]]+sum(pay)-output[[4]]#account balance = accounnt balance+pay-1
-      cat("You won: ",sum(pay))
-      cat("\n")
-      cat("Your current credit balance is: ",output[[2]])
-      cat("\n")
-      return(output)
-    }else{#if you dont have sufficient credits
-      print("Insufficient credits, deposit more")
-      return(output)
-    }
-  }else if(option==4){#cashing out of the slot
+  }else if(option==1){#if your option is to spin the slot
+    if(simulation==FALSE){
+      if(output[[2]]>=output[[5]]*output[[4]]){#this if statement is for if you have atleast 1 credit
+        output[[3]]<-Slot.Spin(output[[3]])#Slot.Spin randomly spins the reels
+        slot.matrix<-SlotDisplay(output[[3]])#a matrix of the window display of the slot machine
+        pay<-CoinPay(slot.matrix,output[[4]],output[[5]])#calculating how much you won
+        SlotMatrixDisplay(slot.matrix,output[[4]],pay,output[[5]])
+        output[[2]]<-output[[2]]+sum(pay)-(output[[4]]*output[[5]])#account balance = accounnt balance+pay-1
+        cat("You won: ",sum(pay))
+        cat("\n")
+        return(output)
+      }else{#if you dont have sufficient credits
+        print("Insufficient credits, deposit more")
+        return(output)
+      }}else{
+        #set.seed(Sys.time()+iteration)
+        output[[3]]<-Slot.Spin(output[[3]])#Slot.Spin randomly spins the reels
+        slot.matrix<-SlotDisplay(output[[3]])#a matrix of the window display of the slot machine
+        pay<-CoinPay(slot.matrix,output[[4]])#calculating how much you won
+        return.list<-list(output[[3]],pay)
+        return(return.list)
+      }
+  }else if(option==5){#cashing out of the slot
     cat("Your cashing out with: ", output[[2]])
     cat("\n")
     output[[1]]<-1
     return(output)
-  }else if(option==5){
-    cat("Machine set to spin with ", output[[4]])
-    cat(" coin")
-    cat("\n")
-    return(output)
-  }else if(option==6){
+  }else if(option==3){
     output[[4]]<-as.integer(#asking user for how many coins per spin
       readline(prompt="Enter the amount of coins you want to spin with between 1&3 : "))
     cat("You are spinning with  ", output[[2]])
     cat(" coins")
+    cat("\n")
+    return(output)
+  }else if(option==4){
+    lines<-as.integer(#asking user for how many credits they want to deposit
+      readline(prompt="Enter the amount(integer [1:3]) of lines active: "))
+    output[[5]]<-lines
+    cat( output[[5]])
+    cat(" lines are active")
     cat("\n")
     return(output)
   }
@@ -439,17 +441,23 @@ SlotManager<-function(slot.list){
   #display of the slot machine
   print(slot.matrix)#printing window display of the slot machine
   
-  output<-list(0, account_balance, slot.list, 1)#creating a list where the first 
+  output<-list(0, account_balance, slot.list, 1,1)#creating a list where the first 
   #element is used as a variable to stop the slot machine. The second variable
   #is the users account balance. The third variable is window matrix. The fourth variable 
   #is the amount of coins per spin
-  names(output)<-c("End_bool", "balance", "slot.list", "Coin.Amount")
+  names(output)<-c("End_bool", "balance", "slot.list", "Coin.Amount","Lines")
   
   
   while(output[[1]]==0){#this while loop will keep going until output[[1]], which
     #is the variable used to stop this loop, is equal to zero
+    cat("Your current credit balance is: ", output[[2]])
+    cat("\n")
+    cat("The amount of coins per line is: ", output[[4]])
+    cat("\n")
+    cat("The amount of lines your are using is:  ", output[[5]])
+    cat("\n")
     option<-PromptFunc()#asking the user for which option he wants
-    output<-PromptOption(option, output, reel.matrix)#executing which option
+    output<-PromptOption(option, output, slot.list)#executing which option
     #the user wants
   }
 }
