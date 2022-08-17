@@ -1,0 +1,408 @@
+---
+title: "R Slot Machine, 3 Coin, 98.13% Payout W/Max Coin"
+output: html_document
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reactablefmtr)
+library(gt)
+library(tidyverse)
+library(formattable)
+library(tinytex)
+library(janitor)
+library(dplyr)
+library(broom)
+library(boot)
+source("function_file.R")#loading function file
+source("par_ff.R")
+slot.table<-readRDS("Slot_Table.RDS")
+```
+
+
+
+```{r initialize, echo=FALSE}
+#pay.out.comb is a data frame with three columns that correspond to reels 1,2,
+#and 3. The rows correspond to winning combinations. "XX" is any symbol except
+#1. 
+pay.out.comb<-data.frame(
+  R1=slot.table$R1,
+  R2=slot.table$R2,
+  R3=slot.table$R3
+)
+#pay.out.factor is a data frame where the columns correspond to reels 1,2, and 3
+#The rows correspond to the rows on pay.out.comb. The elements correspond to 
+#the amount of the corresponding symbol on pay.out.combo on that specific reel. 
+pay.out.factor<-data.frame(
+  F1=slot.table$F1,
+  F2=slot.table$F2,
+  F3=slot.table$F3
+)
+
+total.in<-21*24*109#total.in is the amount of total possible out comes of the slot
+#14 symbols on each reel so 14*14*14. this includes symbols that occur more then
+#1 time on a reel
+
+coin.pays<-data.frame(#coin.pay is a data frame of the corresponding payouts 
+  #for the data frames pay.out.comb and pay.out.factor
+  pays_1=slot.table$`pay 1`,
+  pays_2=slot.table$`pay 2`,
+  pays_3=slot.table$`Pay 3`
+)
+
+coins=1#this is the amount of coins the machine has
+
+#the number of hits of each pay combination is the product of the symbol factors
+hits<-as.data.frame(pay.out.factor[,1]*pay.out.factor[,2]*pay.out.factor[,3])
+colnames(hits)<-"Hits"
+#Adjustment for duplicates
+adj<-slot.table$adj
+adj.hits<-hits-adj
+colnames(adj.hits)<-"adj.hits"
+
+#coin.out is the pay out times the number of hits for a pay combo
+
+coin.out<-data.frame(
+  coin.out_1=(coin.pays$pays_1*adj.hits),
+  coin.out_2=(coin.pays$pays_2*adj.hits),
+  coin.out_3=(coin.pays$pays_3*adj.hits)
+)
+colnames(coin.out)[1]<-"coin.out_1"
+colnames(coin.out)[2]<-"coin.out_2"
+colnames(coin.out)[3]<-"coin.out_3"
+#the total.out is the summation of all the coin.out for all winning combos
+#total.out<-sum(coin.out)
+total.out<-data.frame(
+  total.out.1<-sum(coin.out$coin.out_1),
+  total.out.2<-sum(coin.out$coin.out_2),
+  total.out.3<-sum(coin.out$coin.out_3)
+)
+colnames(total.out)[1]<-"total.out.1"
+colnames(total.out)[2]<-"total.out.2"
+colnames(total.out)[3]<-"total.out.3"
+```
+
+
+```{r sumtable, echo=FALSE}
+#creating a data frame where the first three columns are the symbols of   
+#winning combos, the next three columns are the number of the specific symbol 
+#on the reels in columns 1-3. The 4th columns is the number of hits of the  
+#winning combo. The 5th column is the amount that the combo pays, the 6th 
+#column is coin out which is the number of hits multiplied by the payout
+summary<-cbind(pay.out.comb,pay.out.factor)
+summary<-cbind(summary,hits)
+summary<-cbind(summary,adj)
+summary<-cbind(summary,adj.hits)
+summary<-cbind(summary,coin.pays)
+summary<-cbind(summary,coin.out)
+
+summary<-summary%>%arrange(desc(pays_3))
+#Turning the table summary into a gt table using the gt package
+#summary<-summary%>%arrange(desc(Coin_Pays))
+#Turning the table summary into a gt table using the gt package
+summary%>%gt()%>%tab_options(
+  table.border.right.style="solid",
+  table.border.right.color="black",
+  table.border.right.width = "1.5",
+  table.border.left.style="solid",
+  table.border.left.color="black",
+  table.border.left.width = "1.5",
+  table.border.bottom.style = "solid",
+  table.border.bottom.width = "1.5",
+  table.border.bottom.color = "black",
+  table.border.top.style = "solid",
+  table.border.top.width = "1.5",
+  table.border.top.color = "black",
+ )%>%
+cols_label(
+  F1="R1",
+  F2="R2",
+  F3="R3",
+  Hits="Total Hits",
+  adj.hits="Actual Hits",
+  adj="Minus",
+  pays_1="1st Coin Pays",
+  pays_2="2nd Coin Pays",
+  pays_3="3rd Coin Pays",
+  coin.out_1="1st Coin Out",
+  coin.out_2="2nd Coin Out",
+  coin.out_3="3rd Coin Out"
+  
+)%>%
+  tab_spanner(
+    label = "Symbols",
+    id = "symbols",
+    columns = c(1, 2, 3)
+  ) %>%tab_spanner(
+    label = "Factors",
+    id = "factors",
+    columns = c(4, 5, 6)
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_spanners(spanners = "symbols")
+  )%>% tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_spanners(spanners = "factors")
+  )%>%  tab_style(
+    style = cell_borders(
+      sides = c("right"),
+      color = "black",
+      weight = px(1.5),
+      style = "solid"
+    ),
+    locations = cells_body(
+      columns = c(R3,F3,adj.hits,pays_3)
+    ))%>%summary_rows(
+  columns = c(Hits,adj.hits,coin.out_1,coin.out_2,coin.out_3),
+  fns=list(
+    Totals=~sum(.,na.rm=TRUE)
+  ),
+  missing_text=" ",
+  formatter = fmt_integer
+) %>%
+ tab_source_note(
+   source_note = "X Every Symbol Except !,#,@,W,or 7"
+ ) %>%
+ tab_source_note(
+   source_note = "S is !,#, or @"
+)%>%
+  tab_source_note(
+   source_note = "S7 is !,#,@,or 7"
+)%>%
+  tab_source_note(
+   source_note = "W acts as a wild for every symbols except M"
+)%>%
+ tab_source_note(
+   source_note = "* Stated Symbol not including the wild card"
+)
+
+```
+
+<br>
+```{r summarytable, echo=FALSE}
+
+
+#a data frame with 1 row, the columns being total hits, total out, total in
+#hit % and pay%
+summary.table<-data.frame(
+  Coins=c(1,2,3),
+  Actual.Hits=rep(sum(summary$adj.hits),3),
+  total.out=c(total.out$total.out.1,total.out$total.out.2,total.out$total.out.3),
+  total.in=c(total.in,total.in*2,total.in*3)
+)
+hit.p<-summary.table$Actual.Hits/total.in
+pay.p=summary.table$total.out/summary.table$total.in
+summary.table<-cbind(summary.table,hit.p)
+summary.table<-cbind(summary.table,pay.p)
+#formatting the data frame using the package gt
+colnames(summary.table)<-c("Coins","Total_hits","Total_out","Total_in","Hit_p","Pay_p")
+summary.table%>%gt()%>%tab_options(
+  table.border.right.style="solid",
+  table.border.right.color="black",
+  table.border.right.width = "1.5",
+  table.border.left.style="solid",
+  table.border.left.color="black",
+  table.border.left.width = "1.5",
+  table.border.bottom.style = "solid",
+  table.border.bottom.width = "1.5",
+  table.border.bottom.color = "black",
+  table.border.top.style = "solid",
+  table.border.top.width = "1.5",
+  table.border.top.color = "black",
+)%>%
+  cols_label(
+    Total_hits="Actual Total Hits",
+    Total_out="Total Out",
+    Total_in="Total In",
+    Hit_p="Hit %",
+    Pay_p="Pay %",
+  )%>%fmt_percent(
+    columns=c(Hit_p,Pay_p)
+  )
+
+```
+
+<br>
+```{r paysummary, echo=FALSE}
+# creating a data frame named pays.summary which will have the columns
+# Max coin Pay, % of total hits, % of total out, plays per hit, and pays per hit
+# and higher
+pays.summary<-data.frame(
+  maxcoinpay<-summary$pays_3,#this column represents how much each winning
+  #combination pays out
+  percent.total.hits<-(summary$adj.hits)/sum(summary$adj.hits),#the percentage of a specific winning
+  #combo happening
+  percent.total.outs<-(summary$coin.out_3)/total.out.3,#percentage of the machine pay back
+  #which comes from a specific winning combo
+  plays.per.hit<-round(total.in/summary$adj.hits,digits = 0),#calculating the average plays
+  #per hit needed to get a specific winning combo
+  hits<-summary$adj.hits
+)
+
+colnames(pays.summary)<-c("maxcoinpay","ptotalhits","ptotalout","playsperhit","hits")
+#The payouts of 1 and 2 can happen 3 different ways each, so we need to combine
+#these in the pays.summary data frame. We group the dataframe by maxcoinpay
+#and then sum the columns hits, ptotalhits, and ptotalout
+pays.summary<-pays.summary%>%group_by(maxcoinpay)%>%
+  mutate(hitssum=sum(hits),
+         percenttotalhitssum=sum(ptotalhits),
+         percenttotaloutsum=sum(ptotalout))%>%ungroup()
+
+plays.per.hit<-round(total.in/pays.summary$hitssum,digits = 0)#plays per hit
+#is calculated by total.in divided by how many hits there are for the specific
+#payout
+pays.summary<-cbind(pays.summary,plays.per.hit)
+pays.summary<-pays.summary[!duplicated(pays.summary$maxcoinpay),]
+
+
+#to calculate the p/h and higher we need to arrange the dataframe by the
+#maxcoin pay in a descending manner and the take the cumulative sum
+pays.summary<-pays.summary%>%arrange(desc(maxcoinpay))%>%
+  mutate(cumsumhits=cumsum(hitssum))
+
+#the p/h and higher is calculated by dividing the total hits of the slot by
+#the cumulative sum of the hits
+pays.summary<-pays.summary%>%mutate(payandhigher=round(total.in/cumsumhits,digits=0))
+calc=pays.summary[,c(1,6)]#will be used for another dataframe
+colnames(calc)<-c("pay","hits")
+
+#creating a data frame with columns max coin pays, % total hitsm % of total out
+#plays per hiit and p/h and higher
+pays.summary<-pays.summary[,c(1,7:9,11)]
+pays.summary%>%gt()%>%tab_options(
+  table.border.right.style="solid",
+  table.border.right.color="black",
+  table.border.right.width = "1.5",
+  table.border.left.style="solid",
+  table.border.left.color="black",
+  table.border.left.width = "1.5",
+  table.border.bottom.style = "solid",
+  table.border.bottom.width = "1.5",
+  table.border.bottom.color = "black",
+  table.border.top.style = "solid",
+  table.border.top.width = "1.5",
+  table.border.top.color = "black",
+)%>%cols_label(
+  maxcoinpay="Max Coin Pay",
+  percenttotalhitssum="% Of Hits Adjusted",
+  percenttotaloutsum="% Of Total Out",
+  plays.per.hit="Plays Per Hit",
+  payandhigher="P/H And Higher",
+)%>%  tab_style(
+  style = cell_borders(
+    sides = c("right"),
+    color = "black",
+    weight = px(1.5),
+    style = "solid"
+  ),
+  locations = cells_body(
+    columns = c(1:5)
+  ))%>%fmt_percent(
+    columns=c(percenttotalhitssum,percenttotaloutsum)
+  )
+
+  
+```
+
+<br>
+```{r tableconf, echo=FALSE}
+#Creating a data frame named table, which coins the variables
+#handle pulls, 90% 1confidence factor, lower limit, and upper limit.
+#the table is generated using the function confidence_table
+table<-confidence_table(calc,total.in,coins = 3)
+colnames(table)<-c("Handle Pulls","90% Confidence Factor","Lower Limit","Upper Limit")
+
+#Turning the data frame table into a gt table
+table%>%gt()%>%tab_options(
+  table.border.right.style="solid",
+  table.border.right.color="black",
+  table.border.right.width = "1.5",
+  table.border.left.style="solid",
+  table.border.left.color="black",
+  table.border.left.width = "1.5",
+  table.border.bottom.style = "solid",
+  table.border.bottom.width = "1.5",
+  table.border.bottom.color = "black",
+  table.border.top.style = "solid",
+  table.border.top.width = "1.5",
+  table.border.top.color = "black",
+)%>%tab_style(
+  style = cell_borders(
+    sides = c("right"),
+    color = "black",
+    weight = px(1.5),
+    style = "solid"
+  ),
+  locations = cells_body(
+    #columns = c(1:6)
+  ))%>%fmt_percent(
+    columns=c(3,4)
+  )%>%fmt_number(
+    columns = c(2),
+    decimals = 3
+  )%>%tab_footnote(
+    footnote = "Volatility Index",
+    locations = cells_body(
+      columns = c(2),
+      rows = 2
+    )
+  )%>%
+  opt_footnote_marks(marks = c("*", "+"))
+```
+
+
+<br>
+```{r symbolsum, echo=FALSE}
+# creating a data frame called symbol.l with four columns, the first being
+# a column named symbols whose values range from 1 to 7 and represent the slots
+# symbols. The second being R1 whose values represent how many the symbol on
+# the same row in the Symbols column are on the first real. The third being R2
+# whose values represent how many the symbol on
+# the same row in the Symbols column are on the second real. The fourth being R3
+# whose values represent how many the symbol on
+# the same row in the Symbols column are on the third real.
+symbol_list<-c("B",4,5,6,7,"#","@","!","W","M")
+slot.list<-Slot.Generator()
+
+
+symbol.l_1<-as.data.frame(table(slot.list$reel.1))
+symbol.l_2<-as.data.frame(table(slot.list$reel.2))
+symbol.l_3<-as.data.frame(table(slot.list$reel.3))
+symbol.l<-merge(symbol.l_1,symbol.l_2,by="Var1",all=TRUE)
+symbol.l<-merge(symbol.l,symbol.l_3,by="Var1",all=TRUE)
+symbol.l[is.na(symbol.l)]<-0
+colnames(symbol.l)<-c("Symbols","R1","R2","R3")
+symbol.l%>%gt()%>%tab_options(
+  table.border.right.style="solid",
+  table.border.right.color="black",
+  table.border.right.width = "1.5",
+  table.border.left.style="solid",
+  table.border.left.color="black",
+  table.border.left.width = "1.5",
+  table.border.bottom.style = "solid",
+  table.border.bottom.width = "1.5",
+  table.border.bottom.color = "black",
+  table.border.top.style = "solid",
+  table.border.top.width = "1.5",
+  table.border.top.color = "black",
+)%>%tab_style(
+  style = cell_borders(
+    sides = c("right"),
+    color = "black",
+    weight = px(1.5),
+    style = "solid"
+  ),
+  locations = cells_body(
+    #columns = c(1:6)
+  ))%>%summary_rows(
+      columns = c(R1,R2,R3),
+      fns=list(
+        Total=~sum(.,na.rm=TRUE)
+      ),
+      missing_text=" ",
+      formatter = fmt_integer
+
+    )
+```
