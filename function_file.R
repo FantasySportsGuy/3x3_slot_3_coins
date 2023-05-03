@@ -93,7 +93,7 @@ Slot.Spin<-function(slot.list){
   return(slot.list)
 }
 
-SlotDisplay<-function(slot.list){
+SlotDisplay<-function(slot.list){#SlotDisplay is a function that returns a 3x3 matrix that represents the face of the reels of the 3x3 matrix
   slot.disp<-c(slot.list$reel.1[slot.list$positions$reel.1[1]],
                slot.list$reel.1[slot.list$positions$reel.1[2]],
                slot.list$reel.1[slot.list$positions$reel.1[3]],
@@ -110,7 +110,8 @@ SlotDisplay<-function(slot.list){
   return(slot.matrix)
 }
 
-AdjustPosition<-function(slot.list){
+AdjustPosition<-function(slot.list){#function that adjusts out of bounds positions from spins
+ #ie if if a the position[1,1] is 15 then position[1,2] would be 16 but actually needs to be 1
   slot.list$positions$reel.1<-ifelse(slot.list$positions$reel.1>length(slot.list$reel.1),
      slot.list$positions$reel.1-length(slot.list$reel.1),slot.list$positions$reel.1)
   
@@ -122,17 +123,18 @@ AdjustPosition<-function(slot.list){
   return(slot.list)
 }
 
-PayOutCalc<-function(slot.line){
-  s7.check<-length(grep("7|#|@|!|W",slot.line))
-  seven.check<-length(grep("7|W",slot.line))
-  four.check<-length(grep("4|W",slot.line))
-  five.check<-length(grep("5|W",slot.line))
-  six.check<-length(grep("6|W",slot.line))
-  at.check<-length(grep("@|W",slot.line))
-  pound.check<-length(grep("#|W",slot.line))
-  exclamation.check<-length(grep("!|W",slot.line))
+PayOutCalc<-function(slot.line){#PayOutCalc takes in slot.line which is a data frame containing the slot positions
+ #and the reels. This functions calculates the number of winning lines for each possible winning combo
+  s7.check<-length(grep("7|#|@|!|W",slot.line))#winning lines for any symbol or 7
+  seven.check<-length(grep("7|W",slot.line))#winning lines for all 7s or wild
+  four.check<-length(grep("4|W",slot.line))#winning lines for all 4s or wild
+  five.check<-length(grep("5|W",slot.line))#winning lines for all 5s or wild
+  six.check<-length(grep("6|W",slot.line))#winning lines for all 6s or wild
+  at.check<-length(grep("@|W",slot.line))#winning lines for all @s or wild
+  pound.check<-length(grep("#|W",slot.line))#winning lines for all #s or wilds
+  exclamation.check<-length(grep("!|W",slot.line))#winning lines for all !s or wilds
   
-  if(slot.line[3]=="M"){
+  if(slot.line[3]=="M"){#if the third reel contains the multiplier 
     symbol.m.check<-length(grep("#|@|!|W",slot.line))
     s7.m.check<-length(grep("7|#|@|!|W",slot.line))
     seven.m.check<-length(grep("7|W",slot.line))
@@ -175,8 +177,10 @@ PayOutCalc<-function(slot.line){
   return(pay.checker)
 }
 
+#Paymount is a function which takes in pay.checker which is a dataframe that contains how many winning lines are on a spin with 3 coins
+#and coins which is how many coins were used for that spin. The functions returns the amount of winning lines for the given amount of spins
 PayAmount<-function(pay.checker,coins){
-  if(coins==1){
+  if(coins==1){#data frame containing payout for winning with 1 coin
     pay.active<-data.frame(two.s7=1,
                            two.7=2,
                            three.s7=3,
@@ -198,7 +202,7 @@ PayAmount<-function(pay.checker,coins){
                            two.at.m=12,
                            two.exclamation.m=15)
   }
-  if(coins==2){
+  if(coins==2){#data frame containing payout for winning with 2 coin
     pay.active<-data.frame(two.s7=2,
                            two.7=4,
                            three.s7=6,
@@ -220,7 +224,7 @@ PayAmount<-function(pay.checker,coins){
                            two.at.m=48,
                            two.exclamation.m=60)
   }
-  if(coins==3){
+  if(coins==3){#data frame containing payout for winning with 3 coin
     pay.active<-data.frame(two.s7=3,
                            two.7=6,
                            three.s7=9,
@@ -306,6 +310,7 @@ PayAmount<-function(pay.checker,coins){
   return(pay.active)
 }
 
+#CoinPay calculates the amount of payout per spin
 CoinPay<-function(slot.matrix,coin,lines){
   payout<-rep(0,3)
   if(lines==1){
