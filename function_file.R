@@ -1,7 +1,7 @@
 library(knitr)
 
 
-
+ #generates a reel with a pre set amount of each symbols
 Reel.Generator<-function(blank,four,five,six,seven,pound,at,exclamation,wild,multiplier){
   
   reel.blank<-Symbol.Generator('B',blank)
@@ -27,7 +27,8 @@ Reel.Generator<-function(blank,four,five,six,seven,pound,at,exclamation,wild,mul
   reel<-na.omit(reel)
   return(reel)
 }
-
+#creating a with length "size" composed of all "symbol"
+#if size is zero a matrix with length 1 with 1 NA is generated
 Symbol.Generator<-function(symbol,size){
   if(size==0){
     reel.symbol<-matrix(NA,1)
@@ -36,7 +37,7 @@ Symbol.Generator<-function(symbol,size){
   }
   return(reel.symbol)
 }
-
+#function to generator a matrix representing the reels on a 3x3 matrix
 Slot.Generator<-function(){
   reel.1<-Reel.Generator(blank=0,four=3,five=3,six=2,seven=2,pound=4,
                          at=4,exclamation=3,wild=0,multiplier=0)
@@ -54,7 +55,10 @@ Slot.Generator<-function(){
   slot.list<-AdjustPosition(slot.list)
   return(slot.list)
 }
-
+#Spin is a function that takes in the reel.1, reel.2, reel.3 variables
+#which are matricies that represent the reels on a 3x3 matrix. The output 
+#of this matrix is a 3x3 matrix corrosponding to the face of the slot machine
+#after being spinned
 Spin<-function(reel.1,reel.2,reel.3){
   position.1<-sample(1:length(reel.1),1)
   position.2<-sample(1:length(reel.2),1)
@@ -80,10 +84,12 @@ Spin<-function(reel.1,reel.2,reel.3){
 }
 
 
-
+#Slot.Spin is a function that takes in  a data frame composed of the positions of the slot face and 
+#the slot reels. The function "spins" the positions by randomly selecting the positions of the slot face
 Slot.Spin<-function(slot.list){
-  slot.list$positions<-Spin(slot.list$reel.1,slot.list$reel.2,slot.list$reel.3)
-  slot.list<-AdjustPosition(slot.list)
+  slot.list$positions<-Spin(slot.list$reel.1,slot.list$reel.2,slot.list$reel.3)#randomly changing slot face positions
+  slot.list<-AdjustPosition(slot.list)#adjusting the slot positions in case there are out of bounds 
+  #positions generated. ie if a the position[1,1] is 15 then position[1,2] would be 16 but actually needs to be 1
   return(slot.list)
 }
 
